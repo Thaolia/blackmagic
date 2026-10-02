@@ -519,6 +519,17 @@ void adiv5_dp_init(adiv5_debug_port_s *const dp)
 	}
 #endif
 
+#ifdef CONFIG_RISCV
+	/*
+	 * A RISC-V DMI gateway AP ignores APBANKSEL, so the IDR read below would hit one of its data registers.
+	 * Identify it at offset 0 instead and skip the AP enumeration.
+	 */
+	if (riscv_adi_gateway_dp_probe(dp)) {
+		adiv5_dp_unref(dp);
+		return;
+	}
+#endif
+
 	for (size_t i = 0; i < 256U && invalid_aps < 8U; ++i) {
 		adiv5_access_port_s *ap = adiv5_new_ap(dp, i);
 		if (ap == NULL) {

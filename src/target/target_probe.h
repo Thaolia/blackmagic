@@ -114,4 +114,8 @@ bool zynq7_probe(target_s *target);
 
 void lpc55_dp_prepare(adiv5_debug_port_s *dp);
 
+#ifdef CONFIG_RISCV
+bool riscv_adi_gateway_dp_probe(adiv5_debug_port_s *dp);
+#endif
+
 #endif /* TARGET_TARGET_PROBE_H */
