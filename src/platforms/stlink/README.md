@@ -64,6 +64,44 @@ EOF
 ```
 * For ST-Link v2-1 instead run `stlink-tool -m blackmagic_stlink_firmware.bin` to make the bootloader recognize the firmware as valid thus allowing it to boot on replug
 
+## Standalone build (no bootloader, 64 KiB)
+
+For clones with a 64 KiB STM32F103C8 that you can flash over SWD with a second probe,
+the firmware can be linked at `0x08000000` with no bootloader at all:
+
+* `-Dstlink_standalone=true` links at `0x08000000` (requires `-Dbmd_bootloader=false`).
+  A DFU detach request then simply reboots the firmware.
+* `-Dstlink_flash_size=64` makes the link fail if the firmware does not fit in 64 KiB.
+
+`cross-file/stlink-clone-standalone.ini` combines these with `stlink_swim_nrst_as_uart`
+(UART TX on PB6, RX on PB7, nRST on PB0) and the `cortexm,nrf,rp` targets.
+Adding `stm` does not fit in 64 KiB (about 90 KiB in total).
+Before using `stlink_flash_size=128` on a C8 part, check the upper flash with a write
+and a readback (`st-flash --flash=128k write`/`read` at `0x08010000`). On some clones,
+writes there are silently ignored and the region always reads back as 0xFF.
+
+The build needs newlib-nano (`--specs=nano.specs`). Toolchains built against picolibc,
+such as recent Debian `gcc-arm-none-eabi`, fail on `vsniprintf`; use the
+[Arm GNU Toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) instead.
+
+```sh
+meson setup build-clone --cross-file cross-file/stlink-clone-standalone.ini
+ninja -C build-clone blackmagic_stlink_firmware.bin
+st-flash read clone_backup.bin 0x08000000 0x10000
+st-flash --reset write build-clone/blackmagic_stlink_firmware.bin 0x08000000
+```
+
+The cross-file enables `targets = cortexm,nrf,rp,bat32,stm32f1` with `b_lto=true`.
+It uses LTO because that set does not otherwise fit in 64 KiB (LTO saves ~5 KiB;
+`-ffat-lto-objects` is added automatically when `b_lto` is on, see the top-level
+`meson.build`). Adding `stm32f4` on top overflows 64 KiB.
+
+The `bat32` target is the Cmsemicon BAT32 (an ARM Cortex-M0+): its driver programs
+the on-chip Flash through the FMC controller. Debug and flash *reading* of a BAT32
+work even without the driver, since it attaches as a generic Cortex-M. `stm32f1`
+and `stm32f4` are selectable on their own (STM32F1/F4 only), separate from the full
+`stm` group which pulls in every STM32 family and does not fit here.
+
 ## Reverting to original ST Firmware with running BMP firmware
 
 * Get ST-Link upgrade [firmware](https://www.st.com/content/st_com/en/products/development-tools/software-development-tools/stm32-software-development-tools/stm32-programmers/stsw-link007.html) and unzip. Change to "stsw-link007/AllPlatforms/" in the unzipped directory.

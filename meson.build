@@ -60,6 +60,14 @@ version = vcs_tag(
 # Import the filesystem module
 fs = import('fs')
 
+# Under LTO, GCC prunes the libopencm3 vector table (it is only referenced by
+# the linker script, so the LTO plugin cannot see it is used) and the firmware
+# links empty. -ffat-lto-objects keeps real machine code in every object so the
+# vector table stays linkable, while still performing full cross-module LTO.
+if get_option('b_lto')
+	add_global_arguments('-ffat-lto-objects', language: 'c')
+endif
+
 # Grab if we're in cross-compilation mode or not
 is_cross_build = meson.is_cross_build()
 

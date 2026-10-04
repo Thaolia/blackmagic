@@ -36,6 +36,7 @@ option(
 		'riscv64',
 		'apollo3',
 		'at32f4',
+		'bat32',
 		'ch32',
 		'ch32v',
 		'ch579',
@@ -52,6 +53,8 @@ option(
 		'rp',
 		'sam',
 		'stm',
+		'stm32f1',
+		'stm32f4',
 		'ti',
 		'xilinx'
 	],
@@ -103,6 +106,19 @@ option(
 	type: 'boolean',
 	value: false,
 	description: 'Repurpose the SWIM pins as the UART (only applicable to stlink)'
+)
+option(
+	'stlink_standalone',
+	type: 'boolean',
+	value: false,
+	description: 'Link at 0x08000000 with no bootloader, for flashing over SWD (only applicable to stlink)'
+)
+option(
+	'stlink_flash_size',
+	type: 'combo',
+	choices: ['128', '64'],
+	value: '128',
+	description: 'Flash size in KiB the firmware is allowed to use (only applicable to stlink)'
 )
 option(
 	'serialno',

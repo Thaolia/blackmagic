@@ -43,9 +43,19 @@ probe_stlink_dfu_sources = files(
 stlink_v2_isol = get_option('stlink_v2_isol')
 
 bmd_bootloader = get_option('bmd_bootloader')
+stlink_standalone = get_option('stlink_standalone')
+stlink_flash_size = get_option('stlink_flash_size')
+
+if stlink_standalone and bmd_bootloader
+	error('stlink_standalone requires bmd_bootloader=false')
+endif
 
 probe_stlink_dfu_serial_length = bmd_bootloader ? '9' : '25'
-probe_stlink_load_address = bmd_bootloader ? '0x8002000' : '0x8004000'
+if stlink_standalone
+	probe_stlink_load_address = '0x8000000'
+else
+	probe_stlink_load_address = bmd_bootloader ? '0x8002000' : '0x8004000'
+endif
 
 probe_stlink_args = [
 	f'-DDFU_SERIAL_LENGTH=@probe_stlink_dfu_serial_length@',
@@ -59,7 +69,7 @@ endif
 
 probe_stlink_common_link_args = [
 	'-L@0@'.format(meson.current_source_dir()),
-	'-T@0@'.format('stlink.ld'),
+	'-T@0@'.format(stlink_flash_size == '64' ? 'stlink_64k.ld' : 'stlink.ld'),
 ]
 
 probe_stlink_link_args = [
@@ -105,12 +115,19 @@ probe_bootloader = declare_dependency(
 	dependencies: platform_stm32f1_dfu,
 )
 
+if stlink_standalone
+	probe_stlink_bootloader_name = 'None (standalone)'
+else
+	probe_stlink_bootloader_name = bmd_bootloader ? 'Black Magic Debug Bootloader' : 'OEM ST Bootloader'
+endif
+
 summary(
 	{
 		'Name': probe == 'stlink' ? 'ST-Link' : 'BluePill',
 		'Platform': 'STM32F1',
-		'Bootloader': bmd_bootloader ? 'Black Magic Debug Bootloader' : 'OEM ST Bootloader',
+		'Bootloader': probe_stlink_bootloader_name,
 		'Load Address': probe_stlink_load_address,
+		'Flash Size': f'@stlink_flash_size@ KiB',
 		'SWIM as UART': probe == 'stlink' and stlink_swim_nrst_as_uart,
 	},
 	bool_yn: true,

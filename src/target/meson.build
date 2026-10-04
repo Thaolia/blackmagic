@@ -78,6 +78,7 @@ if is_firmware_build
 		'riscv64': 'RISC-V 64-bit support',
 		'at32f4': 'Arterytek parts',
 		'apollo3': 'Ambiq Apollo3 parts',
+		'bat32': 'Cmsemicon BAT32 parts',
 		'ch32': 'WinChipHead CH32 ARM Cortex parts',
 		'ch32v': 'WinChipHead CH32 RISC-V parts',
 		'ch579': 'WinChipHead CH579 parts',
@@ -93,6 +94,8 @@ if is_firmware_build
 		'rp': 'Raspberry Pi MCUs (RP2040, RP2350)',
 		'sam': 'ATSAM series parts',
 		'stm': 'STM32 (and clones) parts',
+		'stm32f1': 'STM32F1 only',
+		'stm32f4': 'STM32F4 only',
 		'ti': 'Texas Instruments parts',
 		'xilinx': 'Xilinx parts',
 		'lattice': 'Lattice parts',
@@ -179,6 +182,12 @@ target_riscv64 = declare_dependency(
 target_apollo3 = declare_dependency(
 	sources: files('apollo3.c'),
 	compile_args: ['-DCONFIG_APOLLO3=1'],
+	dependencies: target_cortexm,
+)
+
+target_bat32 = declare_dependency(
+	sources: files('bat32.c'),
+	compile_args: ['-DCONFIG_BAT32=1'],
 	dependencies: target_cortexm,
 )
 
@@ -449,6 +458,7 @@ libbmd_target_deps = [
 	# Enable all targets for libbmd
 	target_apollo3,
 	target_at32f4,
+	target_bat32,
 	target_ch32,
 	target_ch32v,
 	target_ch579,
